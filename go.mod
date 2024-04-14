@@ -1,4 +1,4 @@
-module privc
+module github.com/animeshdas2000/privc
 
 go 1.21.3
 

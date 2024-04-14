@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"privc/utils"
 
+	"github.com/animeshdas2000/privc/utils"
 	"github.com/gin-gonic/gin"
 )
 
