@@ -56,6 +56,9 @@ func Detokenize(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, response)
 		return
 	}
+
+	//redisClient := utils.GetRedisClientFromCtx(c)
+
 	Fields := TokenRequestPayload.Data
 	for i, Field := range Fields {
 		//TODO: Write Logic for storing in Persistant storage and comparing

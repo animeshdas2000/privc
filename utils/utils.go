@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 )
 
@@ -38,4 +40,13 @@ func ReadEnvironmentVariables(key string) string {
 		log.Fatal(err)
 	}
 	return envs[key]
+}
+
+func GetRedisClientFromCtx(c *gin.Context) *redis.Client {
+	redisClient, exists := c.Get("redis_client")
+	if !exists {
+		log.Printf("redis not found")
+		return nil
+	}
+	return redisClient.(*redis.Client)
 }
