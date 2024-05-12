@@ -5,10 +5,12 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/animeshdas2000/privc/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 func AESDecrypt(token string) ([]byte, error) {
@@ -56,13 +58,22 @@ func Detokenize(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, response)
 		return
 	}
-
-	//redisClient := utils.GetRedisClientFromCtx(c)
+	redisClient := utils.GetRedisClientFromCtx(c)
 
 	Fields := TokenRequestPayload.Data
 	for i, Field := range Fields {
-		//TODO: Write Logic for storing in Persistant storage and comparing
-		value, err := AESDecrypt(Field)
+		//Getting from Persistant storage and comparing
+		log.Print(i)
+		val, err := redisClient.Get(c, i).Result()
+		if err == redis.Nil {
+			log.Printf("cache miss for %s: %v", Field, err)
+			Fields[i] = "invalid token"
+			continue
+		}
+
+		log.Println(val)
+
+		value, err := AESDecrypt(val)
 		if err != nil {
 			response := utils.Response{
 				Success:      false,

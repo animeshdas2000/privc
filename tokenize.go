@@ -6,6 +6,7 @@ import (
 	"crypto/cipher"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/animeshdas2000/privc/utils"
@@ -55,8 +56,11 @@ func Tokenize(c *gin.Context) {
 		return
 	}
 
+	redisClient := utils.GetRedisClientFromCtx(c)
+
 	Field := TokenReqPayload.Data
 	for i, val := range Field {
+		//Encryption
 		token, err := AESEncrypt(encryptionKey, iv, val)
 		if err != nil {
 			response := utils.Response{
@@ -67,6 +71,10 @@ func Tokenize(c *gin.Context) {
 			return
 		}
 		Field[i] = token
+		err = redisClient.Set(c, i, Field[i], 0).Err()
+		if err != nil {
+			log.Printf("cache err while set %s: %s", i, err)
+		}
 	}
 	response := utils.Response{
 		Success: true,
