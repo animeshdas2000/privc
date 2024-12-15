@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 
 	"github.com/animeshdas2000/privc/utils"
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,7 @@ func AESEncrypt(key string, iv string, plaintext string) (string, error) {
 
 	length := len(plaintext)
 
-	if length%16 != 0 {
+	if length%16 != 0 || length == 0 {
 		extendBlock := 16 - (length % 16)
 		plainTextBlock = make([]byte, length+extendBlock)
 		copy(plainTextBlock[length:], bytes.Repeat([]byte{uint8(extendBlock)}, extendBlock))
@@ -59,8 +60,32 @@ func Tokenize(c *gin.Context) {
 	redisClient := utils.GetRedisClientFromCtx(c)
 
 	Field := TokenReqPayload.Data
+
+	// Check if the Request Payload is empty
+	if len(Field) == 0 {
+		response := utils.Response{
+			Success:      false,
+			ErrorMessage: "invalid Request Payload",
+		}
+		c.AbortWithStatusJSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// Iterate over the Field map
 	for i, val := range Field {
-		//Encryption
+		// Check if the string starts strictly with "Field"
+		r, _ := regexp.Compile(`^Field`)
+		matched := r.MatchString(i)
+		if !matched {
+			response := utils.Response{
+				Success:      false,
+				ErrorMessage: "invalid Request payload: Field value should start with 'Field'",
+			}
+			c.AbortWithStatusJSON(http.StatusBadRequest, response)
+			return
+		}
+
+		// Encryption
 		token, err := AESEncrypt(encryptionKey, iv, val)
 		if err != nil {
 			response := utils.Response{
@@ -70,6 +95,7 @@ func Tokenize(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, response)
 			return
 		}
+
 		Field[i] = token
 		err = redisClient.Set(c, i, Field[i], 0).Err()
 		if err != nil {

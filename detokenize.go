@@ -63,7 +63,6 @@ func Detokenize(c *gin.Context) {
 	Fields := TokenRequestPayload.Data
 	for i, Field := range Fields {
 		//Getting from Persistant storage and comparing
-		log.Print(i)
 		val, err := redisClient.Get(c, i).Result()
 		if err == redis.Nil {
 			log.Printf("cache miss for %s: %v", Field, err)
