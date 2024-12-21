@@ -74,12 +74,38 @@ func Tokenize(c *gin.Context) {
 	// Iterate over the Field map
 	for i, val := range Field {
 		// Check if the string starts strictly with "Field"
-		r, _ := regexp.Compile(`^Field`)
+		r, _ := regexp.Compile(`^field`)
 		matched := r.MatchString(i)
 		if !matched {
 			response := utils.Response{
 				Success:      false,
-				ErrorMessage: "invalid Request payload: Field value should start with 'Field'",
+				ErrorMessage: fmt.Sprintf("invalid Request payload: '%s' key should start with 'field'", i),
+			}
+			c.AbortWithStatusJSON(http.StatusBadRequest, response)
+			return
+		}
+
+		// Check if the value is empty
+		if val == "" {
+			response := utils.Response{
+				Success:      false,
+				ErrorMessage: fmt.Sprintf("invalid Request payload: '%s' value should not be empty", i),
+			}
+			c.AbortWithStatusJSON(http.StatusBadRequest, response)
+			return
+		}
+
+		// Check if the value is already present in the cache
+		exists, err := redisClient.Exists(c, i).Result()
+		if err != nil {
+			log.Printf("cache miss for %s: %v", i, err)
+			continue
+		}
+
+		if exists == 1 {
+			response := utils.Response{
+				Success:      false,
+				ErrorMessage: fmt.Sprintf("invalid Request payload: '%s' key already exists", i),
 			}
 			c.AbortWithStatusJSON(http.StatusBadRequest, response)
 			return

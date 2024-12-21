@@ -64,15 +64,15 @@ func Detokenize(c *gin.Context) {
 	for i, Field := range Fields {
 		//Getting from Persistant storage and comparing
 		val, err := redisClient.Get(c, i).Result()
-		if err == redis.Nil {
+
+		if err == redis.Nil || val != Field {
 			log.Printf("cache miss for %s: %v", Field, err)
 			Fields[i] = "invalid token"
 			continue
 		}
 
-		log.Println(val)
-
 		value, err := AESDecrypt(val)
+
 		if err != nil {
 			response := utils.Response{
 				Success:      false,
