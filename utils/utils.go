@@ -18,6 +18,11 @@ type Response struct {
 	Data         interface{} `json:"data,omitempty"`
 }
 
+type DetokenizeResponse struct {
+	Value string `json:"value"`
+	Found bool   `json:"found"`
+}
+
 type TokenRequestPayload struct {
 	Id   string            `json:"id"`
 	Data map[string]string `json:"data"`

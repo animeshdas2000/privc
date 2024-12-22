@@ -61,13 +61,15 @@ func Detokenize(c *gin.Context) {
 	redisClient := utils.GetRedisClientFromCtx(c)
 
 	Fields := TokenRequestPayload.Data
+
+	respData := make(map[string]interface{}, len(Fields))
 	for i, Field := range Fields {
 		//Getting from Persistant storage and comparing
 		val, err := redisClient.Get(c, i).Result()
 
 		if err == redis.Nil || val != Field {
 			log.Printf("cache miss for %s: %v", Field, err)
-			Fields[i] = "invalid token"
+			respData[Field] = utils.DetokenizeResponse{Found: false, Value: ""}
 			continue
 		}
 
@@ -81,11 +83,12 @@ func Detokenize(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, response)
 			return
 		}
-		Fields[i] = string(value)
+
+		respData[i] = utils.DetokenizeResponse{Value: string(value), Found: true}
 	}
 	response := utils.Response{
 		Success: true,
-		Data:    Fields,
+		Data:    respData,
 	}
 	c.JSON(http.StatusOK, response)
 }
