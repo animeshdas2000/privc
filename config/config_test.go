@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -37,5 +39,23 @@ func TestFromEnvRejects(t *testing.T) {
 		if _, err := fromEnv(env(m)); err == nil {
 			t.Errorf("%s: expected error", name)
 		}
+	}
+}
+
+func TestLoadDoesNotLeakMalformedDotenv(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".env")
+	secret := "SUPERSECRETKEY-0123456789abcdefgh"
+	if err := os.WriteFile(path, []byte("ENCRYPTION_KEY=\""+secret+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	orig := dotenvPaths
+	dotenvPaths = []string{path}
+	t.Cleanup(func() { dotenvPaths = orig })
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected error for malformed .env")
+	}
+	if strings.Contains(err.Error(), secret) {
+		t.Fatalf("error leaks secret: %v", err)
 	}
 }

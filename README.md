@@ -13,16 +13,19 @@ git clone https://github.com/animeshdas2000/privc.git
 cd privc
 ```
 
-2. Set configuration as environment variables (or in a `.env` file, which real environment variables override):
+2. Set configuration as environment variables:
 
 ```
-# AES key: 16, 24 or 32 bytes. 32 bytes gives AES-256.
-ENCRYPTION_KEY=$(openssl rand -hex 16)
+# AES key: 16, 24 or 32 bytes. 32 hex characters = 32 bytes = AES-256.
+export ENCRYPTION_KEY=$(openssl rand -hex 16)
 # Comma-separated API keys, each at least 32 characters.
-API_KEYS=$(openssl rand -hex 32)
+export API_KEY=$(openssl rand -hex 32)
+export API_KEYS=$API_KEY
 ```
 
-The server refuses to start if either is missing or invalid.
+You can also put them in a `.env` file instead. It must contain the literal generated values, because `.env` does not run commands. Real environment variables override the file.
+
+The server refuses to start if either setting is missing or invalid.
 
 3. Build and run:
 

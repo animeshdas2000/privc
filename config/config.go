@@ -32,7 +32,9 @@ type Config struct {
 func Load() (*Config, error) {
 	for _, p := range dotenvPaths {
 		if err := godotenv.Load(p); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("reading %s: %w", p, err)
+			// Do not wrap err: dotenv parse errors quote file contents,
+			// which would print secrets into the logs.
+			return nil, fmt.Errorf("could not parse %s (check quoting and syntax)", p)
 		}
 	}
 	return fromEnv(os.Getenv)
