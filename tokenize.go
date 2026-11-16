@@ -14,19 +14,13 @@ import (
 
 func AESEncrypt(key string, iv string, plaintext string) (string, error) {
 
-	var plainTextBlock []byte
-
+	// PKCS#7: always pad, adding a full block when the length is already a
+	// multiple of the block size, so decryption can always strip padding.
 	length := len(plaintext)
-
-	if length%16 != 0 {
-		extendBlock := 16 - (length % 16)
-		plainTextBlock = make([]byte, length+extendBlock)
-		copy(plainTextBlock[length:], bytes.Repeat([]byte{uint8(extendBlock)}, extendBlock))
-	} else {
-		plainTextBlock = make([]byte, length)
-	}
-
+	extendBlock := aes.BlockSize - (length % aes.BlockSize)
+	plainTextBlock := make([]byte, length+extendBlock)
 	copy(plainTextBlock, []byte(plaintext))
+	copy(plainTextBlock[length:], bytes.Repeat([]byte{uint8(extendBlock)}, extendBlock))
 	block, err := aes.NewCipher([]byte(key))
 
 	if err != nil {
