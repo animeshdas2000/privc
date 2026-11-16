@@ -1,30 +1,52 @@
 # Privc - Data Privacy Vault
 
-Privc is a secure and efficient solution for managing and storing sensitive data.
+Privc tokenizes sensitive values (card numbers, emails, IDs) and turns tokens back into values for authorized callers.
+
+Tokens are AES-GCM ciphertexts with a random nonce, so the same input gives a different token each time and any tampered token is rejected.
 
 ## Getting Started
 
-To get started with Privacy Vault, follow these steps:
-
-1. Installation: Clone the repository to your local machine and navigate to the project directory.
+1. Clone the repository:
 
 ```
-git clone https://github.com/your_username/privacy-vault.git
-cd privacy-vault
+git clone https://github.com/animeshdas2000/privc.git
+cd privc
 ```
 
-2. You'll need to setup `.env` with the following keys:
+2. Set configuration as environment variables (or in a `.env` file, which real environment variables override):
 
 ```
-ENCRYPTION_KEY = 'rand32digitEncryptionKey12345678'
-IV = 'my16digitIvKey12'
+# AES key: 16, 24 or 32 bytes. 32 bytes gives AES-256.
+ENCRYPTION_KEY=$(openssl rand -hex 16)
+# Comma-separated API keys, each at least 32 characters.
+API_KEYS=$(openssl rand -hex 32)
 ```
 
-3. Build and Run: Build the application and start the server.
+The server refuses to start if either is missing or invalid.
+
+3. Build and run:
 
 ```
 go build .
 ./privc
 ```
 
-4. Access the Application: Open your web browser and navigate to http://localhost:8080 to access the Privacy Vault application.
+## API
+
+All endpoints except `GET /` require `Authorization: Bearer <API key>`.
+
+```
+curl -X POST localhost:8080/tokenize \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{"data":{"field1":"4111111111111111"}}'
+
+curl -X POST localhost:8080/detokenize \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{"data":{"field1":"<token from tokenize>"}}'
+```
+
+## Tests
+
+```
+go test ./...
+```

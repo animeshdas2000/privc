@@ -3,21 +3,33 @@ package main
 import (
 	"log"
 
+	"github.com/animeshdas2000/privc/config"
+	"github.com/animeshdas2000/privc/middleware"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("config: %v", err)
 	}
 
+	if err := newRouter(cfg).Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func newRouter(cfg *config.Config) *gin.Engine {
 	r := gin.Default()
+
+	// Health check stays public so the platform can probe it.
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Server Running"})
 	})
-	r.POST("/tokenize", Tokenize)
-	r.POST("/detokenize", Detokenize)
-	r.Run()
+
+	api := r.Group("/", middleware.RequireAPIKey(cfg.APIKeys))
+	api.POST("/tokenize", Tokenize(cfg))
+	api.POST("/detokenize", Detokenize(cfg))
+
+	return r
 }
